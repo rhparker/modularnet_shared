@@ -7,6 +7,9 @@ Net::Net(int num_layers) : num_layers(num_layers) {
   L = new Layer*[num_layers];
   layer_sizes = new int[num_layers+1];
   layer_data_sizes = new int[num_layers+1];
+  for (int i = 0; i <= num_layers; i++) {
+    layer_data_sizes[i] = 0;
+  }
 }
 
 // destructor

@@ -3,6 +3,7 @@
 #include <random>
 #include <iostream>
 #include <cmath>
+#include <stdio.h>
 
 // macro for number of weights
 #define num_weights inputs*outputs
@@ -26,7 +27,6 @@ Layer::~Layer() {};
 void Layer::print_params() {};
 void Layer::properties() {};
 void Layer::update_partial_param(double* in, double* delta, double* partial) {};
-
 
 //
 // fully connected linear layer
@@ -240,7 +240,8 @@ void Softmax::backward(double* in, double* out, double* delta) {
 
 // constructor and destructor
 Dropout::Dropout(int inputs) : Layer(inputs, inputs),
-    gen(rd()), d(std::uniform_real_distribution<>(0,1)), drop_prob(0.25) {};
+    gen(rd()), d(std::uniform_real_distribution<>(0,1)), 
+    drop_prob(0.25) {};
 
 Dropout::~Dropout() {};
 
@@ -275,17 +276,8 @@ void Dropout::forward(double* in, double* out) {
 
 // backward propagation
 void Dropout::backward(double* in, double* out, double* delta) {
-  // pass through if not training
-  if (train == 0) {
-    for (int i = 0; i < inputs; i++) {
-      delta[i] = out[i];
-    }
-  }
-  // if we are training
-  else {
-    for (int i = 0; i < inputs; i++) {
-      delta[i] = out[i] * mask(in,i) / (1-drop_prob);
-    }
+  for (int i = 0; i < inputs; i++) {
+    delta[i] = out[i] * mask(in,i) / (1-drop_prob);
   }
 }
 
@@ -316,8 +308,7 @@ Conv::Conv(int m, int n, int km, int kn, int sm, int sn, double sigma) :
 
   // initialize parameters to normal(0, sigma)
   for (int i = 0; i < pars; i++) {
-    // param[i] = d(gen);
-    param[i] = i;
+    param[i] = d(gen);
   }
 }
 
@@ -327,7 +318,10 @@ Conv::~Conv() {
 };
 
 // print properties
-void Conv::properties() {};
+void Conv::properties() {
+  printf("Convolution layer: input %d (%d, %d), kernel (%d, %d), stride (%d, %d)\n",
+    input_m*input_n,input_m,input_n,2*ker_m+1,2*ker_n+1,stride_m,stride_n);
+};
 
 void Conv::print_params() {
   // iterate over rows
@@ -429,7 +423,7 @@ void Conv::update_partial_param(double* in, double* delta, double* partial) {
 //
 
 // constructor
-Maxpool::Maxpool(int m, int n, int wm, int wn, int sm, int sn, double sigma) : 
+Maxpool::Maxpool(int m, int n, int wm, int wn, int sm, int sn) : 
     Layer(m*n, 0), input_m(m), input_n(n), window_m(wm), window_n(wn), stride_m(sm), stride_n(sn) {
 
   // output size is ceil(input_m / sm) x ceil(input_n/sn)
@@ -442,17 +436,25 @@ Maxpool::Maxpool(int m, int n, int wm, int wn, int sm, int sn, double sigma) :
 Maxpool::~Maxpool() {};
 
 // print properties
-void Maxpool::properties() {};
+void Maxpool::properties() {
+  printf("Max pool layer: input %d (%d, %d), window (%d, %d), stride (%d, %d)\n",
+    input_m*input_n,input_m,input_n,2*window_m+1,2*window_n+1,stride_m,stride_n);
+};
 
 // forward propagation
 void Maxpool::forward(double* in, double* out) {
-  int row, col;
+  int row, col, center;
   // row of output
   for (int i = 0; i < output_m; i++) {
     // column of output
     for (int j = 0; j < output_n; j++) {
-      // initialize current max to center
-      out[ idx(output_n,i,j) ] = in[ idx(input_n, stride_m*i, stride_n*j) ];
+      // initialize current max to center of window
+      center = idx(input_n, stride_m*i, stride_n*j);
+      out[ idx(output_n,i,j) ] = in[ center ];
+      // if training, save argmax
+      if (train == 1) {
+        in[ inputs + idx(output_n,i,j) ] = center;
+      }
       // row of window
       for (int wi = 0; wi < (2*window_m+1); wi++ ) {
         // column of window
@@ -465,6 +467,10 @@ void Maxpool::forward(double* in, double* out) {
             // update max if we are greater than current max
             if ( in[ idx(input_n, row, col) ] > out[ idx(output_n,i,j) ] ) {
               out[ idx(output_n,i,j) ] = in[ idx(input_n, row, col) ];
+              // if training, update argmax as well
+              if (train == 1) {
+                in[ inputs + idx(output_n,i,j) ] = idx(input_n, row, col);
+              }
             }
           }
         }
@@ -474,7 +480,19 @@ void Maxpool::forward(double* in, double* out) {
 }
 
 //  backward propagation
-void Maxpool::backward(double* in, double* out, double* delta) {};
+void Maxpool::backward(double* in, double* out, double* delta) {
+  int amax;
+  // initialize all delta to 0
+  for (int i = 0; i < inputs; i++) {
+    delta[i] = 0;
+  }
+  // add outputs to input corresponding to argmax
+  for (int i = 0; i < outputs; i++) {
+    amax = in[ inputs + i ];
+    delta[amax] += out[i];
+  }
+}
+
 
 
 

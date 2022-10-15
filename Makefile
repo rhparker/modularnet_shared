@@ -8,13 +8,13 @@ CC  = gcc
 F90 = gfortran
 
 # flags
-CXXFLAGS = -O2
 CFLAGS   = -O2
+CXXFLAGS = -O2 -std=c++11
 FFLAGS   = -O2
 
 CPPFLAGS_OMP = -Xpreprocessor -fopenmp -DOMP
 CFLAGS_OMP   = -O2 -I/opt/homebrew/include
-CXXFLAGS_OMP = -O2 -I/opt/homebrew/include
+CXXFLAGS_OMP = -O2 -I/opt/homebrew/include -std=c++11
 LDFLAGS_OMP  = -Wl,-rpath,/opt/homebrew/lib -L/opt/homebrew/lib -lomp
 
 # makefile targets

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <iomanip>
+#include <vector>
 
 #include "classifier.h"
 #include "loadmnist.h"
@@ -56,24 +57,25 @@ int main(int argc, char* argv[]) {
   // std dev for weight initialization
   double sigma = 0.1;
 
+  // std::vector< std::vector <int > > config = {
+  //   {LINEAR,784, 64},
+  //   {RELU, 64},
+  //   {LINEAR,64, 10},
+  //   {SOFTMAX, 10}
+  // };
 
-  // no hidden layers
-  // int num_blocks = 2;
-  // int block_sizes[3] = { 784, 10, 10 };
-  // int block_types[2] = { LINEAR, SOFTMAX };
-  // Classifier C(num_blocks, block_sizes, block_types, sigma);
+  std::vector< std::vector <int > > config = {
+    {LINEAR,784, 64},
+    {RELU, 64},
+    {DROPOUT, 64},
+    {CONV,8,8,1,1},
+    {MAXPOOL,8,8,1,1,2,2},
+    {RELU, 16},
+    {LINEAR,16, 10},
+    {SOFTMAX, 10}
+  };
 
-  // // one hidden layer
-  // int num_blocks = 4;
-  // int block_sizes[5] = { 784, 64, 64, 10, 10 };
-  // int block_types[4] = { LINEAR, RELU, LINEAR, SOFTMAX };
-  // Classifier C(num_blocks, block_sizes, block_types, sigma);
-
-  // one hidden layer with dropout
-  int num_blocks = 5;
-  int block_sizes[6] = { 784, 64, 64, 64, 10, 10 };
-  int block_types[5] = { LINEAR, RELU, DROPOUT, LINEAR, SOFTMAX };
-  Classifier C(num_blocks, block_sizes, block_types, sigma);
+  Classifier C( config, sigma );
 
   // print network properties
   C.properties();
@@ -105,7 +107,7 @@ int main(int argc, char* argv[]) {
     << std::setw(20) << loss_time
     << std::endl;
 
-  int epochs = 2;
+  int epochs = 5;
   int batch_size = 10;
   double learning_rate = 0.1;
   double weight_decay = 0;

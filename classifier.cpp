@@ -42,8 +42,8 @@ unsigned int argmax(int len, double* values) {
 }
 
 // constructor : passes through to Sequential
-Classifier::Classifier(int blocks, int* block_sizes, int* block_types, double sigma) 
-              : Sequential(blocks, block_sizes, block_types, sigma) {};
+Classifier::Classifier(std::vector< std::vector <int> > config, double sigma) 
+              : Sequential(config, sigma) {};
 
 // destructor
 Classifier::~Classifier() {};
@@ -137,7 +137,7 @@ double Classifier::train_epoch(int cnt, double** data, unsigned int* labels,
       // first layer is input layer, so set pointer to current sample
       z[0] = data[index];
       // allocate layer inputs/outputs
-      // adding extra data if needed (e.g. to store the dropout mask)
+      // adding extra data if needed (e.g. to store the dropout mask or argmax)
       for (int j = 1; j <= num_layers; j++) {
           z[j] = new double[ layer_sizes[j] + layer_data_sizes[j] ];
       }

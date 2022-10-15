@@ -188,7 +188,7 @@ class Maxpool : public Layer {
     int output_m, output_n;
 
     // constructor and destructor
-    Maxpool(int m, int n, int wm, int wn, int sm, int sn, double sigma);
+    Maxpool(int m, int n, int wm, int wn, int sm, int sn);
     ~Maxpool();
 
     // print properties

@@ -12,7 +12,7 @@ class Classifier : public Sequential {
     double train_loss;
 
     // constructor and destructor
-    Classifier(int blocks, int* block_sizes, int* block_types, double sigma);
+    Classifier(std::vector< std::vector <int> > config, double sigma);
     ~Classifier(); 
 
     // compute cross-entropy loss and accuracy
