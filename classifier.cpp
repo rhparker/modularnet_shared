@@ -52,7 +52,6 @@ Classifier::~Classifier() {};
 double Classifier::compute_loss(int cnt, double** data, unsigned int* labels) {
   // start timer
   double start_time = get_time();
-
   // running total of number correct
   double correct = 0;
   train_loss = 0;
@@ -92,6 +91,9 @@ double Classifier::train_epoch(int cnt, double** data, unsigned int* labels,
 
   // start timer
   double start_time = get_time();
+
+  // we are training
+  int train = 1;
 
   // number of batches
   int num_batches = cnt / batch_size;
@@ -134,12 +136,14 @@ double Classifier::train_epoch(int cnt, double** data, unsigned int* labels,
       double** z = new double*[num_layers+1];
       // first layer is input layer, so set pointer to current sample
       z[0] = data[index];
+      // allocate layer inputs/outputs
+      // adding extra data if needed (e.g. to store the dropout mask)
       for (int j = 1; j <= num_layers; j++) {
-        z[j] = new double[ layer_sizes[j] ];
+          z[j] = new double[ layer_sizes[j] + layer_data_sizes[j] ];
       }
 
       // step 1: forward propagation on training sample (fills z)
-      forward(z);
+      forward(z, train);
 
       // step 2: backward propagation (fills delta)
       // don't need delta[0], but this way keeps indices constant

@@ -6,12 +6,13 @@ Net::Net(int num_layers) : num_layers(num_layers) {
   // allocate layers
   L = new Layer*[num_layers];
   layer_sizes = new int[num_layers+1];
+  layer_data_sizes = new int[num_layers+1];
 }
 
 // destructor
 Net::~Net() {
-    delete[] L;
-    delete[] layer_sizes;
+  delete[] L;
+  delete[] layer_sizes;
 }
 
 // print properties
@@ -22,9 +23,10 @@ void Net::properties() {
   std::cout << std::endl;
 }
 
-// forward propagation on input
-void Net::forward(double** z) {
+// forward propagation on input (for training or evaluation)
+void Net::forward(double** z, int train) {
   for (int i = 0; i < num_layers; i++) {
+    L[i]->train = train;
     L[i]->forward(z[i],z[i+1]);
   }
 }
@@ -37,8 +39,10 @@ void Net::backward(double** z, double** delta) {
   }
 }
 
-// run network on input
+// run network on input (for evaluation, not training)
 void Net::run(double* in, double* out) {
+    // not training
+    int train = 0;
     double** z = new double*[num_layers+1];
     // first component is input
     z[0] = in;
@@ -49,5 +53,5 @@ void Net::run(double* in, double* out) {
       z[i] = new double[ layer_sizes[i] ];
     }
     // forward propagation
-    forward(z);
+    forward(z, train);
 }

@@ -4,6 +4,7 @@ class Net {
   public:
     int num_layers;
     int* layer_sizes;
+    int* layer_data_sizes;
 
     // layers
     Layer** L;
@@ -16,7 +17,7 @@ class Net {
     void properties();
 
     // forward propagation on input
-    void forward(double** z);
+    void forward(double** z, int train);
 
     // backward propagation
     void backward(double** z, double** delta);

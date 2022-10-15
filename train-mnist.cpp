@@ -63,10 +63,16 @@ int main(int argc, char* argv[]) {
   // int block_types[2] = { LINEAR, SOFTMAX };
   // Classifier C(num_blocks, block_sizes, block_types, sigma);
 
-  // one hidden layer
-  int num_blocks = 4;
-  int block_sizes[5] = { 784, 64, 64, 10, 10 };
-  int block_types[4] = { LINEAR, RELU, LINEAR, SOFTMAX };
+  // // one hidden layer
+  // int num_blocks = 4;
+  // int block_sizes[5] = { 784, 64, 64, 10, 10 };
+  // int block_types[4] = { LINEAR, RELU, LINEAR, SOFTMAX };
+  // Classifier C(num_blocks, block_sizes, block_types, sigma);
+
+  // one hidden layer with dropout
+  int num_blocks = 5;
+  int block_sizes[6] = { 784, 64, 64, 64, 10, 10 };
+  int block_types[5] = { LINEAR, RELU, DROPOUT, LINEAR, SOFTMAX };
   Classifier C(num_blocks, block_sizes, block_types, sigma);
 
   // print network properties

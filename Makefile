@@ -26,7 +26,10 @@ train-mnist : train-mnist.cpp
 train-mnist-omp : train-mnist.cpp
 	$(CXX) $(CPPFLAGS_OMP) $(CXXFLAGS_OMP) $(LDFLAGS_OMP) train-mnist.cpp loadmnist.cpp layer.cpp net.cpp classifier.cpp sequential.cpp -o $@
 
+temp : temp.cpp 
+	$(CXX) $(CXXFLAGS) temp.cpp loadmnist.cpp layer.cpp -o $@
+
 clean :
-	\rm -f *.o *.out train-mnist train-fashion train-mnist-omp
+	\rm -f *.o *.out train-mnist train-fashion train-mnist-omp temp
 
 ####### End of Makefile #######
