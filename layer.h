@@ -39,6 +39,9 @@ class Layer {
 
 class Linear : public Layer {
   public:
+    // number of weights
+    int num_weights;
+
     // constructor and destructor
     Linear(int inputs, int outputs, double sigma);
     ~Linear();
@@ -154,6 +157,8 @@ class Conv : public Layer {
     int stride_m, stride_n;
     // output dimensions (om x om)
     int output_m, output_n;
+    // number of weights (kernel components)
+    int num_weights;
 
     // constructor and destructor
     Conv(int m, int n, int km, int kn, int sm, int sn, double sigma);

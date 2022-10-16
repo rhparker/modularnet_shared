@@ -5,8 +5,6 @@
 #include <cmath>
 #include <stdio.h>
 
-// macro for number of weights
-#define num_weights inputs*outputs
 // macro for getting weight(i,j) from weight array stored as 1D flattened parameter array
 #define weight(p,i,j) p[ i*inputs + j ]
 // macro for getting bias(i) from bias array stored at end of 1D flattened parameter array
@@ -36,6 +34,7 @@ void Layer::update_partial_param(double* in, double* delta, double* partial) {};
 Linear::Linear(int inputs, int outputs, double sigma) : Layer(inputs, outputs) {
   // number of parameters (weights and biases)
   // parameters is a linear vector: weights first (as linear vector), then biases
+  num_weights = inputs*outputs;
   pars = num_weights + outputs;
   param = new double[pars];
 
@@ -291,14 +290,16 @@ void Dropout::backward(double* in, double* out, double* delta) {
 Conv::Conv(int m, int n, int km, int kn, int sm, int sn, double sigma) : 
     Layer(m*n, 0), input_m(m), input_n(n), ker_m(km), ker_n(kn), stride_m(1), stride_n(1) {
 
-  // number of parameters ( 2km+1 x 2kn+1, size of kernel )
-  pars = (2*ker_m+1) * (2*ker_n+1);
-  param = new double[pars];
-
   // output size is ceil(input_m / sm) x ceil(input_n/sn)
   output_m = (int) ceil ( ((double)input_m) / ((double) stride_m) ); 
   output_n = (int) ceil ( ((double)input_n) / ((double) stride_n) ); 
   outputs = output_m * output_n;
+
+  // number of weights parameters ( 2km+1 x 2kn+1, size of kernel )
+  num_weights = (2*ker_m+1) * (2*ker_n+1);
+  // total parameters is weights + biases
+  pars = num_weights + outputs;
+  param = new double[pars];
 
   // random device initialization
   std::random_device rd; 
@@ -310,20 +311,25 @@ Conv::Conv(int m, int n, int km, int kn, int sm, int sn, double sigma) :
   for (int i = 0; i < pars; i++) {
     param[i] = d(gen);
   }
+  // initialize biases to 0
+  for (int i = num_weights; i < pars; i++) {
+    param[i] = 0; 
+  }
 }
 
 // destructor
 Conv::~Conv() {
   delete[] param;
-};
+}
 
 // print properties
 void Conv::properties() {
   printf("Convolution layer: input %d (%d, %d), kernel (%d, %d), stride (%d, %d)\n",
     input_m*input_n,input_m,input_n,2*ker_m+1,2*ker_n+1,stride_m,stride_n);
-};
+}
 
 void Conv::print_params() {
+  std::cout << "Kernel: " << std::endl;
   // iterate over rows
   for (int i = 0; i < (2*ker_m+1); i++) {
     // iterate over columns
@@ -332,7 +338,12 @@ void Conv::print_params() {
     }
     std::cout << std::endl;
   }
-  std::cout << std::endl;
+  // biases
+  std::cout << "Biases: " << std::endl;
+  for (int i = 0; i < outputs; i++) {
+    std::cout << bias(param,i) << " ";
+  }
+  std::cout << std::endl << std::endl;
 }
 
 // forward propagation
@@ -342,7 +353,8 @@ void Conv::forward(double* in, double* out) {
   for (int i = 0; i < output_m; i++) {
     // column of output
     for (int j = 0; j < output_n; j++) {
-      out[ idx(output_n,i,j) ] = 0;
+      // intialize output to bias
+      out[ idx(output_n,i,j) ] = bias( param, idx(output_n,i,j) );
       // row of kernel
       for (int ki = 0; ki < (2*ker_m+1); ki++ ) {
         // column of kernel
@@ -395,6 +407,10 @@ void Conv::backward(double* in, double* out, double* delta) {
 // update partial derivative of loss with respect to parmeters 
 void Conv::update_partial_param(double* in, double* delta, double* partial) {
   int row, col;
+  // bias partials
+  for (int i = 0; i < outputs; i++) {
+    bias(partial,i) += delta[i];
+  }
   // row of kernel
   for (int ki = 0; ki < (2*ker_m+1); ki++ ) {
     // column of kernel
