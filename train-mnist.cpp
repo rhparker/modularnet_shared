@@ -75,14 +75,30 @@ int main(int argc, char* argv[]) {
   //   {SOFTMAX, 10}
   // };
 
+  // std::vector< std::vector <int > > config = {
+  //   {LINEAR,784, 64},
+  //   {RELU, 64},
+  //   {DROPOUT, 64},
+  //   {CONV3,  1,8,8,4,1,1},
+  //   {MAXPOOL,4,8,8,1,1,2,2},
+  //   {RELU, 64},
+  //   {LINEAR,64, 10},
+  //   {SOFTMAX, 10}
+  // };
+
+  // LeNet modernized
   std::vector< std::vector <int > > config = {
-    {LINEAR,784, 64},
-    {RELU, 64},
-    {DROPOUT, 64},
-    {CONV3,  1,8,8,4,1,1},
-    {MAXPOOL,4,8,8,1,1,2,2},
-    {RELU, 64},
-    {LINEAR,64, 10},
+    {CONV3, 1,28,28,6,2,2},
+    {RELU, 4704},
+    {MAXPOOL, 6,28,28,1,1,2,2},
+    {CONV3, 6,14,14,16,2,2},
+    {RELU, 3136},
+    {MAXPOOL, 16,14,14,1,1,2,2},
+    {LINEAR,784,120},
+    {RELU, 120},
+    {LINEAR, 120,84},
+    {RELU, 84},
+    {LINEAR, 84,10},
     {SOFTMAX, 10}
   };
 

@@ -149,7 +149,7 @@ Sigmoid::~Sigmoid() {};
 
 // print properties
 void Sigmoid::properties() {
-  std::cout << "Sigmoid activation layer" << std::endl;
+  std::cout << "Sigmoid activation layer: inputs/outputs " << inputs << std::endl;
 }
 
 // forward propagation
@@ -188,7 +188,7 @@ ReLU::~ReLU() {};
 
 // print properties
 void ReLU::properties() {
-  std::cout << "ReLU activation layer" << std::endl;
+  std::cout << "ReLU activation layer: inputs/outputs " << inputs << std::endl;
 }
 
 // forward propagation
@@ -218,7 +218,7 @@ Softmax::~Softmax() {};
 
 // print properties
 void Softmax::properties() {
-  std::cout << "Softmax activation layer" << std::endl;
+  std::cout << "Softmax activation layer: inputs/outputs " << inputs << std::endl;
 }
 
 // forward propagation
