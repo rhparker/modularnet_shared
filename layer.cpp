@@ -11,8 +11,12 @@
 #define bias(p,i) p[ num_weights + i ]
 // macro for getting mask index
 #define mask(p,i) p[ inputs + i ]
-// macro for generic index
-#define idx(n,i,j) n*i + j
+// macro for generic index in 2D
+#define idx(n,i,j) (n*i + j)
+// macro for generic index in 3D
+#define idx3(m,n,c,i,j) (m*n*c + n*i + j)
+// macro for 3D kernel
+#define ker3(p,co,ci,i,j) p[ ( (2*ker_m+1)*(2*ker_n+1)*input_c*co + (2*ker_m+1)*(2*ker_n+1)*ci + (2*ker_n+1)*i + j ) ] 
 
 //
 // abstract layer class
@@ -31,7 +35,8 @@ void Layer::update_partial_param(double* in, double* delta, double* partial) {};
 //
 
 // constructor and destructor
-Linear::Linear(int inputs, int outputs, double sigma) : Layer(inputs, outputs) {
+Linear::Linear(std::vector<int>  config, double sigma) 
+      : Layer(config[1], config[2]) {
   // number of parameters (weights and biases)
   // parameters is a linear vector: weights first (as linear vector), then biases
   num_weights = inputs*outputs;
@@ -138,7 +143,8 @@ inline double d_sig(double x) {
 }
 
 // constructor and destructor
-Sigmoid::Sigmoid(int inputs) : Layer(inputs, inputs) {};
+Sigmoid::Sigmoid(std::vector<int> config) : Layer(config[1], config[1]) {};
+
 Sigmoid::~Sigmoid() {};
 
 // print properties
@@ -176,7 +182,8 @@ inline double d_rec(double x) {
 }
 
 // constructor and destructor
-ReLU::ReLU(int inputs) : Layer(inputs, inputs) {};
+ReLU::ReLU(std::vector<int> config) : Layer(config[1], config[1]) {};
+
 ReLU::~ReLU() {};
 
 // print properties
@@ -205,7 +212,8 @@ void ReLU::backward(double* in, double* out, double* delta) {
 //
 
 // constructor and destructor
-Softmax::Softmax(int inputs) : Layer(inputs, inputs) {};
+Softmax::Softmax(std::vector<int> config) : Layer(config[1], config[1]) {};
+
 Softmax::~Softmax() {};
 
 // print properties
@@ -238,7 +246,8 @@ void Softmax::backward(double* in, double* out, double* delta) {
 //
 
 // constructor and destructor
-Dropout::Dropout(int inputs) : Layer(inputs, inputs),
+Dropout::Dropout(std::vector<int> config) :
+    Layer(config[1], config[1]),
     gen(rd()), d(std::uniform_real_distribution<>(0,1)), 
     drop_prob(0.25) {};
 
@@ -287,8 +296,11 @@ void Dropout::backward(double* in, double* out, double* delta) {
 
 // constructor
 // for now enforce stride 1
-Conv::Conv(int m, int n, int km, int kn, int sm, int sn, double sigma) : 
-    Layer(m*n, 0), input_m(m), input_n(n), ker_m(km), ker_n(kn), stride_m(1), stride_n(1) {
+Conv::Conv(std::vector<int> config, double sigma) : 
+      Layer(config[1]*config[2], 0), 
+      input_m(config[1]), input_n(config[2]), 
+      ker_m(config[3]), ker_n(config[4]), 
+      stride_m(1), stride_n(1) {
 
   // output size is ceil(input_m / sm) x ceil(input_n/sn)
   output_m = (int) ceil ( ((double)input_m) / ((double) stride_m) ); 
@@ -324,8 +336,10 @@ Conv::~Conv() {
 
 // print properties
 void Conv::properties() {
-  printf("Convolution layer: input %d (%d, %d), kernel (%d, %d), stride (%d, %d)\n",
-    input_m*input_n,input_m,input_n,2*ker_m+1,2*ker_n+1,stride_m,stride_n);
+  printf("Convolution layer: inputs %d (%d x %d), outputs %d (%d x %d), kernel (%d x %d), stride (%d x %d)\n",
+    input_m*input_n,input_m,input_n,
+    output_m*output_n,output_m,output_n,
+    2*ker_m+1,2*ker_n+1,stride_m,stride_n);
 }
 
 void Conv::print_params() {
@@ -348,13 +362,15 @@ void Conv::print_params() {
 
 // forward propagation
 void Conv::forward(double* in, double* out) {
+  // initialize outputs to biases
+  for (int i = 0; i < outputs; i++) {
+    out[i] = bias(param, i);
+  }
   int row, col;
   // row of output
   for (int i = 0; i < output_m; i++) {
     // column of output
     for (int j = 0; j < output_n; j++) {
-      // intialize output to bias
-      out[ idx(output_n,i,j) ] = bias( param, idx(output_n,i,j) );
       // row of kernel
       for (int ki = 0; ki < (2*ker_m+1); ki++ ) {
         // column of kernel
@@ -379,11 +395,14 @@ void Conv::forward(double* in, double* out) {
 // for now enforce stride 1
 void Conv::backward(double* in, double* out, double* delta) {
   int row, col;
+  // initialize deltas to 0
+  for (int i = 0; i < inputs; i++) {
+    delta[i] = 0;
+  }
   // row of input (delta is same size as input)
   for (int i = 0; i < input_m; i++) {
     // column of input (delta is same size as input)
     for (int j = 0; j < input_n; j++) {
-      delta[ idx(input_n,i,j) ] = 0;
       // row of kernel
       for (int ki = 0; ki < (2*ker_m+1); ki++ ) {
         // column of kernel
@@ -411,11 +430,14 @@ void Conv::update_partial_param(double* in, double* delta, double* partial) {
   for (int i = 0; i < outputs; i++) {
     bias(partial,i) += delta[i];
   }
+  // initialize partials to 0
+  for (int i = 0; i < num_weights; i++) {
+    partial[i] = 0;
+  }
   // row of kernel
   for (int ki = 0; ki < (2*ker_m+1); ki++ ) {
     // column of kernel
     for (int kj = 0; kj < (2*ker_n+1); kj++) {
-      partial[ idx( (2*ker_n+1), ki, kj) ] = 0;
       // row of output
       for (int i = 0; i < output_m; i++) {
         // column of output
@@ -439,8 +461,11 @@ void Conv::update_partial_param(double* in, double* delta, double* partial) {
 //
 
 // constructor
-Maxpool::Maxpool(int m, int n, int wm, int wn, int sm, int sn) : 
-    Layer(m*n, 0), input_m(m), input_n(n), window_m(wm), window_n(wn), stride_m(sm), stride_n(sn) {
+Maxpool::Maxpool(std::vector<int> config) :
+      Layer(config[1]*config[2], 0),
+      input_m(config[1]), input_n(config[2]), 
+      window_m(config[3]), window_n(config[4]), 
+      stride_m(config[5]), stride_n(config[6]) {
 
   // output size is ceil(input_m / sm) x ceil(input_n/sn)
   output_m = (int) ceil ( ((double)input_m) / ((double) stride_m) ); 
@@ -453,8 +478,10 @@ Maxpool::~Maxpool() {};
 
 // print properties
 void Maxpool::properties() {
-  printf("Max pool layer: input %d (%d, %d), window (%d, %d), stride (%d, %d)\n",
-    input_m*input_n,input_m,input_n,2*window_m+1,2*window_n+1,stride_m,stride_n);
+  printf("Max pool layer: inputs %d (%d x %d), outputs: %d (%d x %d), window (%d x %d), stride (%d x %d)\n",
+    input_m*input_n,input_m,input_n,
+    output_m*output_n,output_m,output_n,
+    2*window_m+1,2*window_n+1,stride_m,stride_n);
 };
 
 // forward propagation
@@ -509,11 +536,198 @@ void Maxpool::backward(double* in, double* out, double* delta) {
   }
 }
 
+//
+// convolution with 3D kernel
+//
+
+// constructor
+// for now enforce stride 1
+Conv3::Conv3(std::vector<int> config, double sigma) : 
+      Layer(config[1]*config[2]*config[3], 0), 
+      input_c(config[1]), input_m(config[2]), input_n(config[3]), 
+      output_c(config[4]),
+      ker_m(config[5]), ker_n(config[6]), 
+      stride_m(1), stride_n(1) {
+
+  // output for each channel is ceil(input_m / sm) x ceil(input_n/sn)
+  output_m = (int) ceil ( ((double)input_m) / ((double) stride_m) ); 
+  output_n = (int) ceil ( ((double)input_n) / ((double) stride_n) ); 
+  outputs = output_c * output_m * output_n;
+
+  // number of weight parameters ( 2km+1 x 2kn+1 ) * input_c * output_c
+  num_weights = output_c * input_c * (2*ker_m+1) * (2*ker_n+1);
+  // total parameters is weights + biases
+  pars = num_weights + outputs;
+  param = new double[pars];
+
+  // random device initialization
+  std::random_device rd; 
+  std::mt19937 gen(rd()); 
+  // instance of class std::normal_distribution with mean 0, std dev sigma
+  std::normal_distribution<double> d(0, sigma); 
+
+  // initialize parameters to normal(0, sigma)
+  for (int i = 0; i < pars; i++) {
+    param[i] = d(gen);
+  }
+  // initialize biases to 0
+  for (int i = num_weights; i < pars; i++) {
+    param[i] = 0; 
+  }
+}
+
+// destructor
+Conv3::~Conv3() {
+  delete[] param;
+}
+
+// print properties
+void Conv3::properties() {
+  printf("Convolution layer: inputs %d (%d channels, %d x %d), outputs %d (%d channels, %d x %d), kernel (%d x %d), stride (%d x %d)\n",
+    input_c*input_m*input_n, input_c, input_m, input_n,
+    output_c*output_m*output_n, output_c, output_m, output_n,
+    2*ker_m+1, 2*ker_n+1, stride_m, stride_n);
+}
+
+void Conv3::print_params() {
+  std::cout << "Kernel: " << std::endl;
+  // iterate over outputs
+  for (int co = 0; co < output_c; co++) {
+  // iterate over inputs
+    for (int ci = 0; ci < input_c; ci++) {
+      printf("Output layer: %d,  Input layer: %d \n", co, ci);
+      // iterate over rows
+      for (int i = 0; i < (2*ker_m+1); i++) {
+        // iterate over columns
+        for (int j = 0; j < (2*ker_n+1); j++) {
+          std::cout << ker3(param,co,ci,i,j) << "  ";
+        }
+        std::cout << std::endl;
+      }
+      std::cout << std::endl;
+    }
+  }
+  // biases
+  std::cout << "Biases: " << std::endl;
+  for (int i = 0; i < outputs; i++) {
+    std::cout << bias(param,i) << " ";
+  }
+  std::cout << std::endl << std::endl;
+}
 
 
+// forward propagation
+void Conv3::forward(double* in, double* out) {
+  // initialize outputs to biases
+  for (int i = 0; i < outputs; i++) {
+    out[i] = bias(param, i);
+  }
+  int row, col;
+  // iterate over output channels
+  for (int co = 0; co < output_c; co++) {
+  // iterate over input channels
+    for (int ci = 0; ci < input_c; ci++) {
+      // row of output
+      for (int i = 0; i < output_m; i++) {
+        // column of output
+        for (int j = 0; j < output_n; j++) {
+          // row of kernel
+          for (int ki = 0; ki < (2*ker_m+1); ki++ ) {
+            // column of kernel
+            for (int kj = 0; kj < (2*ker_n+1); kj++) {
+              // index of row and column we need in input
+              row = stride_m*i + ki - ker_m;
+              col = stride_n*j + kj - ker_n;
+              // if we are in bounds, then multiply by appropriate kernel element
+              // to perform convolution; this effectively pads with zeros
+              if (row >= 0 && row < input_m && col >= 0 && col < input_n) {
+                out[ idx3(output_m, output_n, co, i, j) ] += 
+                  ker3(param,co,ci,ki,kj) *
+                  in[ idx3(input_m, input_n, ci, row, col) ];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
+// backward propagation
+// for now enforce stride 1
+void Conv3::backward(double* in, double* out, double* delta) {
+  int row, col;
+  // initialize deltas to 0
+  for (int i = 0; i < inputs; i++) {
+    delta[i] = 0;
+  }
+  // iterate over input channels
+  for (int ci = 0; ci < input_c; ci++) {
+    // iterate over output channels
+    for (int co = 0; co < output_c; co++) {
+      // row of input (delta is same size as input)
+      for (int i = 0; i < input_m; i++) {
+        // column of input (delta is same size as input)
+        for (int j = 0; j < input_n; j++) {
+          // row of kernel
+          for (int ki = 0; ki < (2*ker_m+1); ki++ ) {
+            // column of kernel
+            for (int kj = 0; kj < (2*ker_n+1); kj++) {
+              // index of row and column we need from output
+              row = i + ki - ker_m;
+              col = j + kj - ker_n;
+              // if we are in bounds, then multiply by appropriate kernel element
+              // for backpropagation we flip the kernel (horiz and vert)
+              if (row >= 0 && row < output_m && col >= 0 && col < output_n) {
+                delta[ idx3(input_m, input_n, ci, i, j) ] += 
+                  ker3(param,co,ci,(2*ker_m-ki), (2*ker_n-kj) ) *
+                  out[ idx3(output_m, output_n, co, row, col) ];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
-
+// update partial derivative of loss with respect to parmeters 
+void Conv3::update_partial_param(double* in, double* delta, double* partial) {
+  int row, col;
+  // bias partials
+  for (int i = 0; i < outputs; i++) {
+    bias(partial,i) += delta[i];
+  }
+  // initialize partials to 0
+  for (int i = 0; i < num_weights; i++) {
+    partial[i] = 0;
+  }
+  // iterate over outputs
+  for (int co = 0; co < output_c; co++) {
+  // iterate over inputs
+    for (int ci = 0; ci < input_c; ci++) {
+      // row of kernel
+      for (int ki = 0; ki < (2*ker_m+1); ki++ ) {
+        // column of kernel
+        for (int kj = 0; kj < (2*ker_n+1); kj++) {
+          // row of output
+          for (int i = 0; i < output_m; i++) {
+            // column of output
+            for (int j = 0; j < output_n; j++) {
+              row = stride_m*i + ki - ker_m;
+              col = stride_n*j + kj - ker_n;
+              if (row >= 0 && row < input_m && col >= 0 && col < input_n) {
+                ker3(partial,co,ci,ki,kj) += 
+                  delta[ idx3(output_m, output_n, co, i, j) ] *
+                  in[ idx3(output_m, input_n, ci, row, col) ];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 
 

@@ -5,6 +5,7 @@
 #define DROPOUT 102
 #define CONV 103
 #define MAXPOOL 104
+#define CONV3 105
 
 // activations
 #define SIG 201

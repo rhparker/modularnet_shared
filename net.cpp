@@ -2,7 +2,7 @@
 #include <iostream>
 
 // constructor
-Net::Net(int num_layers) : num_layers(num_layers) {
+Net::Net(int num_layers) : num_layers(num_layers), pars(0) {
   // allocate layers
   L = new Layer*[num_layers];
   layer_sizes = new int[num_layers+1];
@@ -20,6 +20,7 @@ Net::~Net() {
 
 // print properties
 void Net::properties() {
+  std::cout << "Layers: " << num_layers << ",  Parameters: " << pars << std::endl;
   for (int i = 0; i < num_layers; i++) {
     L[i]->properties();
   }

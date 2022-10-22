@@ -1,4 +1,5 @@
 #include <random>
+#include <vector>
 
 //
 // abstract layer class
@@ -43,7 +44,7 @@ class Linear : public Layer {
     int num_weights;
 
     // constructor and destructor
-    Linear(int inputs, int outputs, double sigma);
+    Linear(std::vector<int> config, double sigma);
     ~Linear();
 
     // print parameters and properties
@@ -65,7 +66,7 @@ class Linear : public Layer {
 class Sigmoid : public Layer {
   public:
      // constructor and destructor : same number of inputs and outputs
-    Sigmoid(int inputs);
+    Sigmoid(std::vector<int> config);
     ~Sigmoid();
 
     // print properties
@@ -83,7 +84,7 @@ class Sigmoid : public Layer {
 class ReLU : public Layer {
   public:
      // constructor and destructor : same number of inputs and outputs
-    ReLU(int inputs);
+    ReLU(std::vector<int> config);
     ~ReLU();
 
     // print properties
@@ -101,7 +102,7 @@ class ReLU : public Layer {
 class Softmax : public Layer {
   public:
      // constructor and destructor : same number of inputs and outputs
-    Softmax(int inputs);
+    Softmax(std::vector<int> config);
     ~Softmax();
 
     // print properties
@@ -123,7 +124,7 @@ class Dropout : public Layer {
     double drop_prob;
 
     // constructor and destructor : same number of inputs and outputs
-    Dropout(int inputs);
+    Dropout(std::vector<int> config);
     ~Dropout();
 
     // set dropout probability (default from constructor is 0.25)
@@ -161,7 +162,7 @@ class Conv : public Layer {
     int num_weights;
 
     // constructor and destructor
-    Conv(int m, int n, int km, int kn, int sm, int sn, double sigma);
+    Conv(std::vector<int> config, double sigma);
     ~Conv();
 
     // print parameters and properties
@@ -193,7 +194,7 @@ class Maxpool : public Layer {
     int output_m, output_n;
 
     // constructor and destructor
-    Maxpool(int m, int n, int wm, int wn, int sm, int sn);
+    Maxpool(std::vector<int> config);
     ~Maxpool();
 
     // print properties
@@ -202,4 +203,38 @@ class Maxpool : public Layer {
     // forward and backward propagation
     virtual void forward(double* in, double* out);
     virtual void backward(double* in, double* out, double* delta);
+};
+
+
+//
+// convolution with 3D kernel
+//
+
+class Conv3 : public Layer {
+  public:
+    // dimensions in 3D (c x m x n)
+    int input_c, input_m, input_n;
+    // kernel dimensions
+    int ker_m, ker_n;
+    // strides
+    int stride_m, stride_n;
+    // output dimensions (om x om)
+    int output_c, output_m, output_n;
+    // number of weights (kernel components)
+    int num_weights;
+
+    // constructor and destructor
+    Conv3(std::vector<int> config, double sigma);
+    ~Conv3();
+
+    // print parameters and properties
+    void print_params();
+    void properties();
+
+    // forward and backward propagation
+    virtual void forward(double* in, double* out);
+    virtual void backward(double* in, double* out, double* delta);
+
+    // update partial derivative of loss with respect to parmeters 
+    virtual void update_partial_param(double* in, double* delta, double* partial);
 };

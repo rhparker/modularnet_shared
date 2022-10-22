@@ -13,50 +13,46 @@ Sequential::Sequential(std::vector< std::vector <int> > config, double sigma)
 
     switch (layer_types[i]) {
       case LINEAR:
-        inputs  = config[i][1];
-        outputs = config[i][2];
-        L[i] = new Linear( inputs, outputs, sigma);
+        L[i] = new Linear(config[i], sigma);
         break;
 
       case DROPOUT:
-        inputs  = config[i][1];
-        outputs = config[i][1];
-        L[i] = new Dropout( inputs );
+        L[i] = new Dropout(config[i]);
         layer_data_sizes[i] = inputs;
         break;
 
       case CONV:
-        inputs = config[i][1]*config[i][2];
-        L[i] = new Conv(config[i][1],config[i][2],config[i][3],config[i][4],1,1,sigma);
-        outputs = L[i]->outputs;
+        L[i] = new Conv(config[i], sigma);
         break;
 
       case MAXPOOL:
-        inputs = config[i][1]*config[i][2];
-        L[i] = new Maxpool(config[i][1],config[i][2],config[i][3],config[i][4],
-            config[i][5],config[i][6]);
-        outputs = L[i]->outputs;
+        L[i] = new Maxpool(config[i]);
         layer_data_sizes[i] = outputs;
         break;
 
+      case CONV3:
+        L[i] = new Conv3(config[i], sigma);
+        break;
+
       case SIG:
-        inputs  = config[i][1];
-        outputs = config[i][1];
-        L[i] = new Sigmoid( inputs );
+        L[i] = new Sigmoid(config[i]);
         break;
 
       case RELU:
-        inputs  = config[i][1];
-        outputs = config[i][1];
-        L[i] = new ReLU( inputs );
+        L[i] = new ReLU(config[i]);
         break;
 
       case SOFTMAX:
-        inputs  = config[i][1];
-        outputs = config[i][1];
-        L[i] = new Softmax( inputs );
+        L[i] = new Softmax(config[i]);
         break;
     }
+
+    // take number of inputs and outputs from newly created layer
+    inputs  = L[i]->inputs;
+    outputs = L[i]->outputs;
+
+    // total number of parameters
+    pars += L[i]->pars;
 
     // if input-output mismatch, mark invalid
     // only matters for layers after the first

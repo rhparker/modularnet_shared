@@ -5,6 +5,9 @@ class Net {
     int num_layers;
     int* layer_sizes;
     int* layer_data_sizes;
+    
+    // total number of parameters
+    int pars;
 
     // layers
     Layer** L;
