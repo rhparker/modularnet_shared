@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
   //   {RELU, 64},
   //   {DROPOUT, 64},
   //   {CONV,8,8,1,1},
-  //   {MAXPOOL,8,8,1,1,2,2},
+  //   {MAXPOOL,1,8,8,1,1,2,2},
   //   {RELU, 16},
   //   {LINEAR,16, 10},
   //   {SOFTMAX, 10}
@@ -79,9 +79,10 @@ int main(int argc, char* argv[]) {
     {LINEAR,784, 64},
     {RELU, 64},
     {DROPOUT, 64},
-    {CONV3,1,8,8,4,1,1},
-    {RELU, 256},
-    {LINEAR,256, 10},
+    {CONV3,  1,8,8,4,1,1},
+    {MAXPOOL,4,8,8,1,1,2,2},
+    {RELU, 64},
+    {LINEAR,64, 10},
     {SOFTMAX, 10}
   };
 

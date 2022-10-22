@@ -337,9 +337,9 @@ Conv::~Conv() {
 // print properties
 void Conv::properties() {
   printf("Convolution layer: inputs %d (%d x %d), outputs %d (%d x %d), kernel (%d x %d), stride (%d x %d)\n",
-    input_m*input_n,input_m,input_n,
-    output_m*output_n,output_m,output_n,
-    2*ker_m+1,2*ker_n+1,stride_m,stride_n);
+    inputs, input_m, input_n,
+    outputs, output_m, output_n,
+    2*ker_m+1, 2*ker_n+1, stride_m, stride_n);
 }
 
 void Conv::print_params() {
@@ -462,15 +462,16 @@ void Conv::update_partial_param(double* in, double* delta, double* partial) {
 
 // constructor
 Maxpool::Maxpool(std::vector<int> config) :
-      Layer(config[1]*config[2], 0),
-      input_m(config[1]), input_n(config[2]), 
-      window_m(config[3]), window_n(config[4]), 
-      stride_m(config[5]), stride_n(config[6]) {
+      Layer(config[1]*config[2]*config[3], 0),
+      channels(config[1]),
+      input_m(config[2]), input_n(config[3]), 
+      window_m(config[4]), window_n(config[5]), 
+      stride_m(config[6]), stride_n(config[7]) {
 
-  // output size is ceil(input_m / sm) x ceil(input_n/sn)
+  // output size is channels * ceil(input_m / sm) * ceil(input_n/sn)
   output_m = (int) ceil ( ((double)input_m) / ((double) stride_m) ); 
   output_n = (int) ceil ( ((double)input_n) / ((double) stride_n) ); 
-  outputs = output_m * output_n;
+  outputs = channels * output_m * output_n;
 }
 
 // destructor
@@ -478,41 +479,44 @@ Maxpool::~Maxpool() {};
 
 // print properties
 void Maxpool::properties() {
-  printf("Max pool layer: inputs %d (%d x %d), outputs: %d (%d x %d), window (%d x %d), stride (%d x %d)\n",
-    input_m*input_n,input_m,input_n,
-    output_m*output_n,output_m,output_n,
+  printf("Max pool layer: inputs %d (%d channels, %d x %d), outputs: %d (%d channels, %d x %d), window (%d x %d), stride (%d x %d)\n",
+    inputs, channels, input_m, input_n,
+    outputs, channels, output_m, output_n,
     2*window_m+1,2*window_n+1,stride_m,stride_n);
 };
 
 // forward propagation
 void Maxpool::forward(double* in, double* out) {
   int row, col, center;
-  // row of output
-  for (int i = 0; i < output_m; i++) {
-    // column of output
-    for (int j = 0; j < output_n; j++) {
-      // initialize current max to center of window
-      center = idx(input_n, stride_m*i, stride_n*j);
-      out[ idx(output_n,i,j) ] = in[ center ];
-      // if training, save argmax
-      if (train == 1) {
-        in[ inputs + idx(output_n,i,j) ] = center;
-      }
-      // row of window
-      for (int wi = 0; wi < (2*window_m+1); wi++ ) {
-        // column of window
-        for (int wj = 0; wj < (2*window_n+1); wj++) {
-          row = stride_m*i + wi - window_m;
-          col = stride_n*j + wj - window_n;
-          // only grab elements of input if we are in bounds
-          // this effectively pads with zeros
-          if (row >= 0 && row < input_m && col >= 0 && col < input_n) {
-            // update max if we are greater than current max
-            if ( in[ idx(input_n, row, col) ] > out[ idx(output_n,i,j) ] ) {
-              out[ idx(output_n,i,j) ] = in[ idx(input_n, row, col) ];
-              // if training, update argmax as well
-              if (train == 1) {
-                in[ inputs + idx(output_n,i,j) ] = idx(input_n, row, col);
+  // do one channel at at time
+  for (int c = 0; c < channels; c++) {
+    // row of output
+    for (int i = 0; i < output_m; i++) {
+      // column of output
+      for (int j = 0; j < output_n; j++) {
+        // initialize current max to center of window
+        center = idx3( input_m, input_n, c, stride_m*i, stride_n*j );
+        out[ idx3(output_m, output_n, c, i, j) ] = in[ center ];
+        // if training, save argmax
+        if (train == 1) {
+          in[ inputs + idx3(output_m, output_n, c, i, j) ] = center;
+        }
+        // row of window
+        for (int wi = 0; wi < (2*window_m+1); wi++ ) {
+          // column of window
+          for (int wj = 0; wj < (2*window_n+1); wj++) {
+            row = stride_m*i + wi - window_m;
+            col = stride_n*j + wj - window_n;
+            // only grab elements of input if we are in bounds
+            // this effectively pads with zeros
+            if (row >= 0 && row < input_m && col >= 0 && col < input_n) {
+              // update max if we are greater than current max
+              if ( in[ idx3(input_m, input_n, c, row, col) ] > out[ idx3(output_m, output_n, c, i, j) ] ) {
+                out[ idx3(output_m, output_n, c, i, j) ] = in[ idx3( input_m, input_n, c, row, col) ];
+                // if training, update argmax as well
+                if (train == 1) {
+                  in[ inputs + idx3(output_m, output_n, c, i, j) ] = idx3(input_m, input_n, c, row, col);
+                }
               }
             }
           }
@@ -584,8 +588,8 @@ Conv3::~Conv3() {
 // print properties
 void Conv3::properties() {
   printf("Convolution layer: inputs %d (%d channels, %d x %d), outputs %d (%d channels, %d x %d), kernel (%d x %d), stride (%d x %d)\n",
-    input_c*input_m*input_n, input_c, input_m, input_n,
-    output_c*output_m*output_n, output_c, output_m, output_n,
+    inputs, input_c, input_m, input_n,
+    outputs, output_c, output_m, output_n,
     2*ker_m+1, 2*ker_n+1, stride_m, stride_n);
 }
 

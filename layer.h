@@ -184,6 +184,8 @@ class Conv : public Layer {
 
 class Maxpool : public Layer {
   public:
+    // number of channels
+    int channels;
     // dimensions in 2D (m x n)
     int input_m, input_n;
     // window dimensions

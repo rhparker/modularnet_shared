@@ -18,7 +18,7 @@ Sequential::Sequential(std::vector< std::vector <int> > config, double sigma)
 
       case DROPOUT:
         L[i] = new Dropout(config[i]);
-        layer_data_sizes[i] = inputs;
+        layer_data_sizes[i] = L[i]->inputs;
         break;
 
       case CONV:
@@ -27,7 +27,7 @@ Sequential::Sequential(std::vector< std::vector <int> > config, double sigma)
 
       case MAXPOOL:
         L[i] = new Maxpool(config[i]);
-        layer_data_sizes[i] = outputs;
+        layer_data_sizes[i] = L[i]->outputs;
         break;
 
       case CONV3:
