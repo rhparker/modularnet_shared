@@ -145,41 +145,7 @@ class Dropout : public Layer {
 };
 
 //
-// convolution with 2D kernel
-//
-
-class Conv : public Layer {
-  public:
-    // dimensions in 2D (m x n)
-    int input_m, input_n;
-    // kernel dimensions
-    int ker_m, ker_n;
-    // strides
-    int stride_m, stride_n;
-    // output dimensions (om x om)
-    int output_m, output_n;
-    // number of weights (kernel components)
-    int num_weights;
-
-    // constructor and destructor
-    Conv(std::vector<int> config, double sigma);
-    ~Conv();
-
-    // print parameters and properties
-    void print_params();
-    void properties();
-
-    // forward and backward propagation
-    virtual void forward(double* in, double* out);
-    virtual void backward(double* in, double* out, double* delta);
-
-    // update partial derivative of loss with respect to parmeters 
-    virtual void update_partial_param(double* in, double* delta, double* partial);
-};
-
-
-//
-// Max pool with 2D window
+// Max pool with 2D window, multiple channels
 //
 
 class Maxpool : public Layer {
@@ -209,10 +175,10 @@ class Maxpool : public Layer {
 
 
 //
-// convolution with 3D kernel
+// convolution with 2D kernel, multiple input and output channels
 //
 
-class Conv3 : public Layer {
+class Conv : public Layer {
   public:
     // dimensions in 3D (c x m x n)
     int input_c, input_m, input_n;
@@ -226,8 +192,8 @@ class Conv3 : public Layer {
     int num_weights;
 
     // constructor and destructor
-    Conv3(std::vector<int> config, double sigma);
-    ~Conv3();
+    Conv(std::vector<int> config, double sigma);
+    ~Conv();
 
     // print parameters and properties
     void print_params();

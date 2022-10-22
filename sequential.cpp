@@ -30,10 +30,6 @@ Sequential::Sequential(std::vector< std::vector <int> > config, double sigma)
         layer_data_sizes[i] = L[i]->outputs;
         break;
 
-      case CONV3:
-        L[i] = new Conv3(config[i], sigma);
-        break;
-
       case SIG:
         L[i] = new Sigmoid(config[i]);
         break;

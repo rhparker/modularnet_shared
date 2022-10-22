@@ -88,10 +88,10 @@ int main(int argc, char* argv[]) {
 
   // LeNet modernized
   std::vector< std::vector <int > > config = {
-    {CONV3, 1,28,28,6,2,2},
+    {CONV, 1,28,28,6,2,2},
     {RELU, 4704},
     {MAXPOOL, 6,28,28,1,1,2,2},
-    {CONV3, 6,14,14,16,2,2},
+    {CONV, 6,14,14,16,2,2},
     {RELU, 3136},
     {MAXPOOL, 16,14,14,1,1,2,2},
     {LINEAR,784,120},
