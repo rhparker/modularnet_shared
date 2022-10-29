@@ -118,7 +118,7 @@ void Linear::backward(double* in, double* out, double* delta) {
 void Linear::update_partial_param(double* in, double* delta, double* partial) {
   // bias partials
   for (int j = 0; j < outputs; j++) {
-    bias(partial,j) += delta[j];
+    bias(partial,j) = delta[j];
   }
   // weight partials
   for (int j = 0; j < outputs; j++) {
@@ -533,7 +533,7 @@ void Conv::update_partial_param(double* in, double* delta, double* partial) {
   int row, col;
   // bias partials
   for (int i = 0; i < outputs; i++) {
-    bias(partial,i) += delta[i];
+    bias(partial,i) = delta[i];
   }
   // initialize partials to 0
   for (int i = 0; i < num_weights; i++) {
