@@ -1,5 +1,7 @@
-# simplenet
+# modularnet_shared
 
-Simple, fully-connected neural network in C++ for classification problems.
+Modular neural network in C++ for classification problems.
+
+Works with OMP, uses shared memory to store network.
 
 Loads data from MNIST dataset
